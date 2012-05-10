@@ -1,0 +1,48 @@
+:hostname: localhost:8080
+:log_file: /dev/null
+:session_secret: lafundacion # fill in with something unique per-deployment
+
+# a Sunlight API key, separate from the key used to do most searches/polling,
+# that will be used in links to data URLs that require one, if data demo mode is on
+:demo_key: 
+
+:services:
+  :shared_secret:
+  :api_name: scout
+
+:email:
+  :via: :smtp
+  :from:
+  :reply_to:
+
+  :pony:
+    # Can be passed directly into Pony
+    :via: :smtp
+    :via_options:
+      :address:
+      :port:
+      :user_name:
+      :password:
+      :authentication: plain
+      :domain:
+      :enable_starttls_auto: false
+
+  :postmark:
+    :api_key: 
+
+:twilio:
+  :account_sid:
+  :auth_token: 
+  :from: # phone number
+
+# subscription-specific stuff
+:subscriptions:
+  :sunlight_api_key: 
+  :rtc_endpoint: # only override if you know what you're doing and have a fake RTC endpoint
+
+# set of emails to receive admin notices
+:admin:
+  - 
+
+:debug:
+  :output_urls: false # outputs polled URLs to STDOUT
