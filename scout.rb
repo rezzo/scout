@@ -6,7 +6,7 @@ require 'sinatra/flash'
 require 'rack/file'
 
 set :logging, false
-set :views, 'views'
+set :views, 'app/views'
 set :public_folder, 'public'
 
 # disable sessions in test environment so it can be manually set
@@ -21,19 +21,15 @@ configure(:development) do |config|
   config.also_reload "./config/admin.rb"
   config.also_reload "./config/email.rb"
   config.also_reload "./config/sms.rb"
-  config.also_reload "./helpers.rb"
-  config.also_reload "./helpers/*.rb"
-  config.also_reload "./models/*.rb"
-  config.also_reload "./controllers/*.rb"
+  config.also_reload "./app/helpers/*.rb"
+  config.also_reload "./app/models/*.rb"
+  config.also_reload "./app/controllers/*.rb"
   config.also_reload "./subscriptions/adapters/*.rb"
   config.also_reload "./subscriptions/*.rb"
   config.also_reload "./deliveries/*.rb"
 end
 
-require './controllers/api_keys'
-require './controllers/users'
-require './controllers/subscriptions'
-require './controllers/feeds'
+Dir.glob('app/controllers/*.rb').each {|filename| load filename}
 
 
 before do
@@ -56,7 +52,7 @@ get "/item/:interest_type/:item_id" do
   interest_type = params[:interest_type].strip
   item_id = params[:item_id].strip
 
-  interest = interest_for item_id, interest_type
+  interest = item_interest_for item_id, interest_type
 
   erb :show, :layout => !pjax?, :locals => {
     :interest => interest,
@@ -68,13 +64,13 @@ end
 get "/fetch/item/:interest_type/:item_id" do
   interest_type = params[:interest_type].strip
   item_id = params[:item_id].strip
-  subscription_type = interest_data[interest_type][:adapter]
+  subscription_type = interest_data[interest_type]['adapter']
 
   unless item = Subscriptions::Manager.find(subscription_type, item_id)
     halt 404 and return
   end
 
-  interest = interest_for item_id, interest_type
+  interest = item_interest_for item_id, interest_type
 
   erb :"subscriptions/#{subscription_type}/_show", :layout => false, :locals => {
     :item => item,
@@ -84,7 +80,7 @@ get "/fetch/item/:interest_type/:item_id" do
 end
 
 helpers do
-  def interest_for(item_id, interest_type)
+  def item_interest_for(item_id, interest_type)
     if logged_in?
       current_user.interests.find_or_initialize_by(
         :in => item_id, 
@@ -116,6 +112,13 @@ helpers do
 
   def requires_login
     redirect '/' unless logged_in?
+  end
+
+  # done as the end of an endpoint
+  def json(code, object)
+    headers["Content-Type"] = "application/json"
+    status code
+    object.to_json
   end
 
 end
